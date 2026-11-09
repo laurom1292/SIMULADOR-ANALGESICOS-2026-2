@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador Analgésicos | Laura Romero Castillo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --card:     #1c2333;
+  --border:   #30363d;
+  --accent:   #2f81f7;
+  --green:    #3fb950;
+  --orange:   #d29922;
+  --red:      #f85149;
+  --text:     #e6edf3;
+  --muted:    #7d8590;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+  padding: 20px;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.container {
+  max-width: 1280px;
+  margin: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, #0d1117 0%, #161b22 100%);
+}
+.header-brand { display: flex; align-items: center; gap: 14px; }
+.header-icon {
+  width: 42px; height: 42px;
+  background: rgba(47,129,247,0.12);
+  border: 1px solid rgba(47,129,247,0.3);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3em;
+}
+.header-title { font-size: 1.25em; font-weight: 700; letter-spacing: -0.3px; }
+.header-sub   { font-size: 0.78em; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+.author-tag {
+  background: rgba(47,129,247,0.1);
+  border: 1px solid rgba(47,129,247,0.25);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+
+/* ---- Tabs ---- */
+.tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg); }
+.tab {
+  padding: 13px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.2px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- Content ---- */
+.content { display: none; padding: 20px 24px 24px; }
+.content.active { display: block; animation: fadeIn 0.25s; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+
+/* ---- 3-column grid ---- */
+.grid3 {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+/* ---- Panel ---- */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.panel-label {
+  font-size: 0.68em;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.panel-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ---- Form ---- */
+.fg { margin-bottom: 12px; }
+.fg label {
+  display: block;
+  font-size: 0.72em;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+select {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.88em;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M5 6L0 0h10z' fill='%237d8590'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+select:focus { outline: none; border-color: var(--accent); }
+
+/* ---- Dot counter ---- */
+.dots { display: flex; gap: 6px; justify-content: center; margin: 12px 0 4px; }
+.dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  transition: all 0.3s;
+}
+.dot.filled { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 6px rgba(47,129,247,0.4); }
+.proto-note { font-size: 0.72em; color: var(--muted); text-align: center; margin: -4px 0 12px; font-family: var(--mono); }
+.count-label { text-align: center; font-size: 0.72em; color: var(--muted); margin-bottom: 12px; font-family: var(--mono); }
+
+/* ---- Buttons ---- */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-family: var(--sans);
+  font-size: 0.88em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-bottom: 7px;
+  letter-spacing: 0.1px;
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+.btn:not(:disabled):hover { transform: translateY(-1px); }
+.btn:not(:disabled):active { transform: translateY(0); }
+
+.btn-primary {
+  background: var(--green);
+  color: #000;
+  border-color: #3fb950;
+}
+.btn-secondary {
+  background: rgba(47,129,247,0.12);
+  color: var(--accent);
+  border-color: rgba(47,129,247,0.3);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--border);
+}
+.btn-save-glow {
+  animation: savePulse 1.5s ease-in-out infinite;
+}
+@keyframes savePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(47,129,247,0.3); }
+  50%     { box-shadow: 0 0 0 6px rgba(47,129,247,0); }
+}
+
+/* ---- Scene wrapper ---- */
+.scene-box {
+  background: #060a0f;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+.scene-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.scene-svg { width: 100%; height: auto; display: block; }
+
+/* ---- Status bar ---- */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  background: #0d1117;
+  border-top: 1px solid var(--border);
+  font-size: 0.78em;
+  color: var(--muted);
+  font-family: var(--mono);
+  min-height: 36px;
+}
+.sdot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #30363d;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.sdot.active  { background: var(--orange); animation: bl 0.7s infinite; }
+.sdot.done    { background: var(--green); }
+@keyframes bl { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+/* ---- Results ---- */
+.last-display {
+  text-align: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.last-num {
+  font-family: var(--mono);
+  font-size: 2.4em;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: -1px;
+  transition: color 0.4s;
+}
+.last-num.flash { color: var(--green); }
+.last-num.cutoff { color: var(--orange); }
+.last-unit { font-size: 0.35em; color: var(--muted); }
+
+.rtable { width: 100%; border-collapse: collapse; font-size: 0.82em; }
+.rtable th { color: var(--muted); font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+.rtable td { padding: 5px 6px; border-bottom: 1px solid #1c2333; color: var(--text); }
+.rtable td.mono { font-family: var(--mono); font-weight: 600; color: #e6edf3; }
+.rtable tr.stats td { background: rgba(47,129,247,0.07); font-weight: 700; font-family: var(--mono); color: var(--accent); }
+.rtable tr:last-child td { border-bottom: none; }
+
+/* ---- Accumulated table ---- */
+.data-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.data-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.data-header-left { font-size: 0.72em; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; }
+.data-header-right { display: flex; gap: 8px; align-items: center; }
+.chip {
+  background: rgba(47,129,247,0.1);
+  border: 1px solid rgba(47,129,247,0.2);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 0.75em;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8em;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-family: var(--sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-sm:hover { transform: translateY(-1px); }
+.btn-export { background: #da6b0a; color: white; border-color: #da6b0a; }
+.btn-clear  { background: transparent; color: var(--muted); border-color: var(--border); }
+
+.scroll-x { overflow-x: auto; }
+.acc-table { width: 100%; border-collapse: collapse; font-size: 0.82em; min-width: 700px; }
+.acc-table th {
+  background: var(--surface);
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.72em;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.acc-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #1c2333;
+  color: var(--text);
+  white-space: nowrap;
+}
+.acc-table tr:hover td { background: rgba(255,255,255,0.02); }
+.acc-table td.mono { font-family: var(--mono); font-weight: 600; }
+.acc-table td.drug { font-weight: 600; }
+.empty-row td { text-align: center; color: var(--muted); padding: 20px; font-size: 0.85em; }
+
+/* ======================= ANIMATIONS ======================= */
+
+/* HP mouse - jump off plate */
+#hp-mouse-grp {
+  transform-origin: center bottom;
+}
+.hp-jump {
+  animation: hpJump 0.75s cubic-bezier(.22,.61,.36,1) forwards;
+}
+@keyframes hpJump {
+  0%   { transform: translate(0,0) rotate(0deg); opacity:1; }
+  28%  { transform: translate(10px,-60px) rotate(-10deg); opacity:1; }
+  55%  { transform: translate(28px,-90px) rotate(-22deg); opacity:1; }
+  100% { transform: translate(55px,-75px) rotate(-30deg); opacity:0; }
+}
+
+/* TF tail retraction */
+#tf-tail-grp {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+}
+.tf-retract {
+  animation: tfRetract 0.55s cubic-bezier(.22,.61,.36,1) forwards;
+}
+@keyframes tfRetract {
+  0%   { transform: rotate(0deg); }
+  30%  { transform: rotate(-78deg); }
+  65%  { transform: rotate(-58deg); }
+  100% { transform: rotate(-65deg); }
+}
+
+/* Writhing: contorsión abdominal */
+#wr-body, #wr-hind { transform-box: fill-box; transform-origin: 50% 50%; }
+.wr-writhe #wr-body { animation: wrBody 0.42s ease-in-out; }
+.wr-writhe #wr-hind { animation: wrHind 0.42s ease-in-out; }
+@keyframes wrBody { 0%,100%{ transform: none; } 45%{ transform: scale(1.14,0.72) translateY(6px); } }
+@keyframes wrHind { 0%,100%{ transform: none; } 45%{ transform: translate(-16px,2px) rotate(-18deg) scaleX(1.35); } }
+.wr-idle #wr-body { animation: wrBreath 1.6s ease-in-out infinite; }
+@keyframes wrBreath { 0%,100%{ transform: none; } 50%{ transform: scale(1.02,1.04); } }
+
+/* heat waves */
+.hw { animation: hwRise 1.8s ease-in-out infinite; }
+.hw:nth-child(2) { animation-delay: 0.6s; }
+.hw:nth-child(3) { animation-delay: 1.2s; }
+@keyframes hwRise {
+  0%   { opacity:0; transform:translateY(0) scaleX(1); }
+  35%  { opacity:0.65; }
+  100% { opacity:0; transform:translateY(-28px) scaleX(0.4); }
+}
+
+/* IR beam pulse */
+.ir-beam { animation: irPulse 0.9s ease-in-out infinite alternate; }
+@keyframes irPulse { from{opacity:0.12;} to{opacity:0.32;} }
+
+/* plate glow */
+.pg { animation: pgGlow 1.3s ease-in-out infinite alternate; }
+@keyframes pgGlow { from{fill:#8b1a1a;} to{fill:#d33;} }
+
+/* LED blink */
+.led { animation: ledBlink 1.4s ease-in-out infinite; }
+@keyframes ledBlink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+/* ---- Responsive ---- */
+@media (max-width: 960px) {
+  .grid3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="header-brand">
+    <div class="header-icon">🔬</div>
+    <div>
+      <div class="header-title">Simulador de Analgésicos</div>
+      <div class="header-sub">mouse models · hot plate · tail flick · writhing</div>
+    </div>
+  </div>
+  <div class="author-tag">Laura Romero Castillo</div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('hp',this)">🔥 Test de Placa Caliente</button>
+  <button class="tab" onclick="switchTab('tf',this)">🌡️ Test de Retirada de Cola</button>
+  <button class="tab" onclick="switchTab('wr',this)">🧪 Test de Contorsiones</button>
+</div>
+
+<!-- ====================== HOT PLATE ====================== -->
+<div id="hp" class="content active">
+<div class="grid3">
+
+  <!-- Controls -->
+  <div class="panel">
+    <div class="panel-label">Parámetros</div>
+
+    <div class="fg">
+      <label>Fármaco</label>
+      <select id="hp-drug" onchange="onDrugChange('hp')">
+        <option value="control">Control (suero fisiológico)</option>
+        <option value="paracetamol">Paracetamol</option>
+        <option value="ibuprofen">Ibuprofeno</option>
+        <option value="piroxicam">Piroxicam</option>
+        <option value="celecoxib">Celecoxib</option>
+        <option value="tramadol">Tramadol</option>
+        <option value="morphine">Morfina</option>
+        <option value="fentanyl">Fentanilo</option>
+        <option value="cmpA">Compuesto A (desconocido)</option>
+        <option value="cmpB">Compuesto B (desconocido)</option>
+        <option value="cmpC">Compuesto C (desconocido)</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Dosis</label>
+      <select id="hp-dose"></select>
+    </div>
+
+    <div class="fg">
+      <label>Pretratamiento (i.p., 15 min antes)</label>
+      <select id="hp-antag"></select>
+    </div>
+    <div class="proto-note">Administración intraperitoneal · Medida a los 30 min</div>
+
+    <div class="dots" id="hp-dots">
+      <div class="dot" id="hp-d0"></div>
+      <div class="dot" id="hp-d1"></div>
+      <div class="dot" id="hp-d2"></div>
+      <div class="dot" id="hp-d3"></div>
+      <div class="dot" id="hp-d4"></div>
+    </div>
+    <div class="count-label"><span id="hp-n">0</span> / 5 ratones</div>
+
+    <button class="btn btn-primary" id="hp-add" onclick="addMouse('hp')">
+      <span>🐭</span> Añadir ratón
+    </button>
+    <button class="btn btn-secondary" id="hp-save" onclick="saveSession('hp')" disabled>
+      <span>💾</span> Guardar sesión
+    </button>
+    <button class="btn btn-ghost" onclick="newSession('hp')">
+      ↺ Nueva sesión
+    </button>
+  </div>
+
+  <!-- Scene -->
+  <div>
+    <div class="scene-box">
+      <div class="scene-area">
+        <svg class="scene-svg" viewBox="0 0 460 230" xmlns="http://www.w3.org/2000/svg">
+
+          <!-- Bench top -->
+          <rect x="0" y="190" width="460" height="40" fill="#1a1410"/>
+          <rect x="0" y="190" width="460" height="4" fill="#2a2016"/>
+
+          <!-- Hot plate body -->
+          <rect x="115" y="135" width="230" height="57" rx="8" fill="#111"/>
+          <rect x="120" y="139" width="220" height="48" rx="6" fill="#1a1a1a"/>
+          <!-- Plate surface slab -->
+          <rect x="125" y="120" width="210" height="20" rx="5" fill="#3a3a3a"/>
+          <rect x="130" y="122" width="200" height="15" rx="4">
+            <animate attributeName="fill" values="#6b1010;#c0392b;#6b1010" dur="1.4s" repeatCount="indefinite"/>
+          </rect>
+          <!-- Plate top rim -->
+          <rect x="128" y="120" width="204" height="4" rx="2" fill="#555"/>
+
+          <!-- Display window -->
+          <rect x="285" y="148" width="46" height="22" rx="3" fill="#000"/>
+          <text x="308" y="163" text-anchor="middle" fill="#ff4400" font-size="11" font-family="IBM Plex Mono, monospace" font-weight="700">52°C</text>
+          <!-- LED -->
+          <circle cx="269" cy="159" r="5" fill="#e00" class="led"/>
+          <!-- Knob -->
+          <circle cx="247" cy="166" r="9" fill="#252525"/>
+          <circle cx="247" cy="166" r="6" fill="#2f2f2f"/>
+          <line x1="247" y1="158" x2="247" y2="163" stroke="#aaa" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- Power button -->
+          <rect x="126" y="148" width="22" height="13" rx="3" fill="#1e3a5f"/>
+          <text x="137" y="158" text-anchor="middle" fill="#5dade2" font-size="8" font-family="IBM Plex Mono, monospace">ON</text>
+
+          <!-- Heat waves from surface -->
+          <path class="hw" d="M180 120 Q187 102 180 84" stroke="#ff7b2b" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+          <path class="hw" d="M230 120 Q238 100 230 82" stroke="#ff7b2b" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+          <path class="hw" d="M280 120 Q288 102 280 84" stroke="#ff7b2b" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+
+          <!-- MOUSE GROUP (animated for jump) -->
+          <g id="hp-mouse-grp">
+            <!-- shadow -->
+            <ellipse cx="230" cy="122" rx="42" ry="5" fill="#000" opacity="0.3"/>
+            <!-- body -->
+            <ellipse cx="222" cy="108" rx="46" ry="23" fill="#b8956a"/>
+            <!-- neck -->
+            <ellipse cx="261" cy="106" rx="16" ry="16" fill="#b8956a"/>
+            <!-- head -->
+            <ellipse cx="272" cy="96" rx="26" ry="22" fill="#c8a578"/>
+            <!-- outer ear L -->
+            <ellipse cx="262" cy="76" rx="12" ry="10" fill="#c8a578"/>
+            <ellipse cx="262" cy="76" rx="7.5" ry="6" fill="#e0b0b0"/>
+            <!-- outer ear R -->
+            <ellipse cx="283" cy="74" rx="11" ry="9" fill="#c8a578"/>
+            <ellipse cx="283" cy="74" rx="6.5" ry="5.5" fill="#e0b0b0"/>
+            <!-- eye -->
+            <circle cx="282" cy="91" r="5" fill="#0a0a0a"/>
+            <circle cx="284" cy="89" r="1.8" fill="white"/>
+            <!-- nose -->
+            <ellipse cx="295" cy="99" rx="5" ry="3.5" fill="#e0b0b0"/>
+            <!-- mouth -->
+            <path d="M293 102 Q296 105 299 102" stroke="#b88" stroke-width="1" fill="none"/>
+            <!-- whiskers -->
+            <line x1="295" y1="97" x2="315" y2="92" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+            <line x1="295" y1="99" x2="317" y2="99" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+            <line x1="295" y1="101" x2="315" y2="106" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+            <!-- legs -->
+            <ellipse cx="250" cy="128" rx="11" ry="6" fill="#a07048"/>
+            <ellipse cx="222" cy="130" rx="12" ry="6" fill="#a07048"/>
+            <ellipse cx="196" cy="129" rx="12" ry="6" fill="#a07048"/>
+            <!-- back leg -->
+            <ellipse cx="182" cy="125" rx="10" ry="7" fill="#a07048"/>
+            <!-- belly fur hint -->
+            <ellipse cx="222" cy="118" rx="28" ry="10" fill="#d0aa80" opacity="0.25"/>
+            <!-- tail -->
+            <path d="M178 112 Q158 118 144 107 Q132 97 136 86" stroke="#a07048" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+            <path d="M136 86 Q134 78 140 73" stroke="#a07048" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          </g>
+
+        </svg>
+      </div>
+      <div class="statusbar">
+        <div class="sdot" id="hp-sdot"></div>
+        <span id="hp-status">Selecciona fármaco y dosis, después añade un ratón.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="panel">
+    <div class="panel-label">Resultados</div>
+    <div class="last-display">
+      <div class="last-num" id="hp-last">--<span class="last-unit">s</span></div>
+      <div style="font-size:0.72em;color:var(--muted);margin-top:3px;font-family:var(--mono)">último valor</div>
+    </div>
+    <table class="rtable">
+      <thead><tr><th>Ratón</th><th>Latencia (s)</th></tr></thead>
+      <tbody id="hp-rbody">
+        <tr><td colspan="2" style="color:var(--muted);font-size:0.82em;text-align:center;padding:14px">Sin datos</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /.grid3 -->
+
+<!-- Accumulated data -->
+<div class="data-panel">
+  <div class="data-header">
+    <div class="data-header-left">Tabla de datos acumulados — Placa caliente</div>
+    <div class="data-header-right">
+      <div class="chip" id="hp-chip">0 sesiones</div>
+      <button class="btn-sm btn-export" onclick="exportCSV('hp')">⬇ Exportar CSV</button>
+      <button class="btn-sm btn-clear" onclick="clearAll('hp')">🗑 Limpiar</button>
+    </div>
+  </div>
+  <div class="scroll-x">
+    <table class="acc-table">
+      <thead>
+        <tr>
+          <th>Fármaco</th><th>Dosis</th><th>Pretrat.</th>
+          <th>R1 (s)</th><th>R2 (s)</th><th>R3 (s)</th><th>R4 (s)</th><th>R5 (s)</th>
+          <th>Media (s)</th><th>SD (s)</th>
+        </tr>
+      </thead>
+      <tbody id="hp-acc"><tr class="empty-row"><td colspan="10">No hay sesiones guardadas</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /#hp -->
+
+<!-- ====================== TAIL FLICK ====================== -->
+<div id="tf" class="content">
+<div class="grid3">
+
+  <!-- Controls -->
+  <div class="panel">
+    <div class="panel-label">Parámetros</div>
+
+    <div class="fg">
+      <label>Fármaco</label>
+      <select id="tf-drug" onchange="onDrugChange('tf')">
+        <option value="control">Control (suero fisiológico)</option>
+        <option value="paracetamol">Paracetamol</option>
+        <option value="ibuprofen">Ibuprofeno</option>
+        <option value="piroxicam">Piroxicam</option>
+        <option value="celecoxib">Celecoxib</option>
+        <option value="tramadol">Tramadol</option>
+        <option value="morphine">Morfina</option>
+        <option value="fentanyl">Fentanilo</option>
+        <option value="cmpA">Compuesto A (desconocido)</option>
+        <option value="cmpB">Compuesto B (desconocido)</option>
+        <option value="cmpC">Compuesto C (desconocido)</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Dosis</label>
+      <select id="tf-dose"></select>
+    </div>
+
+    <div class="fg">
+      <label>Pretratamiento (i.p., 15 min antes)</label>
+      <select id="tf-antag"></select>
+    </div>
+    <div class="proto-note">Administración intraperitoneal · Medida a los 30 min</div>
+
+    <div class="dots" id="tf-dots">
+      <div class="dot" id="tf-d0"></div>
+      <div class="dot" id="tf-d1"></div>
+      <div class="dot" id="tf-d2"></div>
+      <div class="dot" id="tf-d3"></div>
+      <div class="dot" id="tf-d4"></div>
+    </div>
+    <div class="count-label"><span id="tf-n">0</span> / 5 ratones</div>
+
+    <button class="btn btn-primary" id="tf-add" onclick="addMouse('tf')">
+      <span>🐭</span> Añadir ratón
+    </button>
+    <button class="btn btn-secondary" id="tf-save" onclick="saveSession('tf')" disabled>
+      <span>💾</span> Guardar sesión
+    </button>
+    <button class="btn btn-ghost" onclick="newSession('tf')">
+      ↺ Nueva sesión
+    </button>
+  </div>
+
+  <!-- Scene -->
+  <div>
+    <div class="scene-box">
+      <div class="scene-area">
+        <svg class="scene-svg" viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg">
+
+          <!-- Bench -->
+          <rect x="0" y="182" width="460" height="38" fill="#1a1410"/>
+          <rect x="0" y="182" width="460" height="4" fill="#2a2016"/>
+
+          <!-- Restrainer cylinder -->
+          <!-- back face -->
+          <ellipse cx="295" cy="135" rx="14" ry="37" fill="#2a3540"/>
+          <!-- body -->
+          <rect x="80" y="98" width="215" height="74" rx="5" fill="#2a3540"/>
+          <!-- front face -->
+          <ellipse cx="80" cy="135" rx="14" ry="37" fill="#1e2a33"/>
+          <!-- highlight stripe -->
+          <rect x="88" y="101" width="200" height="9" rx="4" fill="white" opacity="0.07"/>
+          <!-- ventilation holes -->
+          <circle cx="120" cy="122" r="5" fill="#1a2530"/>
+          <circle cx="120" cy="149" r="5" fill="#1a2530"/>
+          <circle cx="160" cy="122" r="5" fill="#1a2530"/>
+          <circle cx="160" cy="149" r="5" fill="#1a2530"/>
+          <circle cx="200" cy="122" r="5" fill="#1a2530"/>
+          <circle cx="200" cy="149" r="5" fill="#1a2530"/>
+          <circle cx="240" cy="122" r="5" fill="#1a2530"/>
+          <circle cx="240" cy="149" r="5" fill="#1a2530"/>
+          <!-- label -->
+          <text x="170" y="140" text-anchor="middle" fill="#3a4a5a" font-size="9" font-family="IBM Plex Mono, monospace" font-weight="700">TAIL FLICK UNIT</text>
+
+          <!-- Mouse head peeking out left -->
+          <ellipse cx="68" cy="132" rx="20" ry="17" fill="#c8a578"/>
+          <!-- ear -->
+          <ellipse cx="61" cy="117" rx="9" ry="8" fill="#c8a578"/>
+          <ellipse cx="61" cy="117" rx="5.5" ry="4.5" fill="#e0b0b0"/>
+          <!-- eye -->
+          <circle cx="59" cy="128" r="4" fill="#0a0a0a"/>
+          <circle cx="61" cy="126" r="1.5" fill="white"/>
+          <!-- nose -->
+          <ellipse cx="50" cy="134" rx="4" ry="3" fill="#e0b0b0"/>
+          <!-- whiskers -->
+          <line x1="49" y1="132" x2="32" y2="128" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+          <line x1="49" y1="134" x2="30" y2="134" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+          <line x1="49" y1="136" x2="32" y2="140" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+          <!-- hint of body inside -->
+          <ellipse cx="185" cy="135" rx="70" ry="20" fill="#b8956a" opacity="0.2"/>
+
+          <!-- TAIL GROUP (animated) -->
+          <g id="tf-tail-grp">
+            <path d="M294 136 Q325 137 348 140 Q368 143 378 148"
+                  stroke="#a07048" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <path d="M378 148 Q388 152 394 156"
+                  stroke="#a07048" stroke-width="5" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- Heat lamp apparatus -->
+          <!-- stand -->
+          <rect x="400" y="155" width="8" height="30" fill="#2a2a2a" rx="2"/>
+          <rect x="392" y="182" width="24" height="6" rx="3" fill="#1a1a1a"/>
+          <!-- lamp arm -->
+          <rect x="395" y="105" width="35" height="52" rx="6" fill="#1a1a1a"/>
+          <rect x="399" y="109" width="27" height="44" rx="4" fill="#111"/>
+          <!-- lamp opening ellipse -->
+          <ellipse cx="399" cy="131" rx="11" ry="18" fill="#0a0a0a"/>
+          <!-- filament glow -->
+          <ellipse cx="399" cy="131" rx="7" ry="12">
+            <animate attributeName="fill" values="#cc3300;#ff6600;#cc3300" dur="0.7s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.7;1;0.7" dur="0.7s" repeatCount="indefinite"/>
+          </ellipse>
+          <!-- IR beam cone toward tail -->
+          <polygon class="ir-beam" points="392,120 392,142 365,148 365,132" fill="#ff5500"/>
+          <!-- lamp display -->
+          <rect x="403" y="112" width="22" height="14" rx="2" fill="#000"/>
+          <text x="414" y="123" text-anchor="middle" fill="#ff4400" font-size="8" font-family="IBM Plex Mono, monospace">IR</text>
+          <!-- LED indicator -->
+          <circle cx="425" cy="130" r="4" fill="#e00" class="led"/>
+
+        </svg>
+      </div>
+      <div class="statusbar">
+        <div class="sdot" id="tf-sdot"></div>
+        <span id="tf-status">Selecciona fármaco y dosis, después añade un ratón.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="panel">
+    <div class="panel-label">Resultados</div>
+    <div class="last-display">
+      <div class="last-num" id="tf-last">--<span class="last-unit">s</span></div>
+      <div style="font-size:0.72em;color:var(--muted);margin-top:3px;font-family:var(--mono)">último valor</div>
+    </div>
+    <table class="rtable">
+      <thead><tr><th>Ratón</th><th>Latencia (s)</th></tr></thead>
+      <tbody id="tf-rbody">
+        <tr><td colspan="2" style="color:var(--muted);font-size:0.82em;text-align:center;padding:14px">Sin datos</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /.grid3 -->
+
+<!-- Accumulated data -->
+<div class="data-panel">
+  <div class="data-header">
+    <div class="data-header-left">Tabla de datos acumulados — Tail Flick</div>
+    <div class="data-header-right">
+      <div class="chip" id="tf-chip">0 sesiones</div>
+      <button class="btn-sm btn-export" onclick="exportCSV('tf')">⬇ Exportar CSV</button>
+      <button class="btn-sm btn-clear" onclick="clearAll('tf')">🗑 Limpiar</button>
+    </div>
+  </div>
+  <div class="scroll-x">
+    <table class="acc-table">
+      <thead>
+        <tr>
+          <th>Fármaco</th><th>Dosis</th><th>Pretrat.</th>
+          <th>R1 (s)</th><th>R2 (s)</th><th>R3 (s)</th><th>R4 (s)</th><th>R5 (s)</th>
+          <th>Media (s)</th><th>SD (s)</th>
+        </tr>
+      </thead>
+      <tbody id="tf-acc"><tr class="empty-row"><td colspan="10">No hay sesiones guardadas</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /#tf -->
+
+<!-- ====================== WRITHING (CONTORSIONES) ====================== -->
+<div id="wr" class="content">
+<div class="grid3">
+
+  <!-- Controls -->
+  <div class="panel">
+    <div class="panel-label">Parámetros</div>
+
+    <div class="fg">
+      <label>Fármaco</label>
+      <select id="wr-drug" onchange="onDrugChange('wr')">
+        <option value="control">Control (suero fisiológico)</option>
+        <option value="paracetamol">Paracetamol</option>
+        <option value="ibuprofen">Ibuprofeno</option>
+        <option value="piroxicam">Piroxicam</option>
+        <option value="celecoxib">Celecoxib</option>
+        <option value="tramadol">Tramadol</option>
+        <option value="morphine">Morfina</option>
+        <option value="fentanyl">Fentanilo</option>
+        <option value="cmpA">Compuesto A (desconocido)</option>
+        <option value="cmpB">Compuesto B (desconocido)</option>
+        <option value="cmpC">Compuesto C (desconocido)</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Dosis</label>
+      <select id="wr-dose"></select>
+    </div>
+
+    <div class="fg">
+      <label>Pretratamiento (i.p., 15 min antes)</label>
+      <select id="wr-antag"></select>
+    </div>
+    <div class="proto-note">Fármaco i.p. · A los 30 min: ácido acético 0,6 % i.p. (10 ml/kg) · Recuento durante 10 min</div>
+
+    <div class="dots" id="wr-dots">
+      <div class="dot" id="wr-d0"></div>
+      <div class="dot" id="wr-d1"></div>
+      <div class="dot" id="wr-d2"></div>
+      <div class="dot" id="wr-d3"></div>
+      <div class="dot" id="wr-d4"></div>
+    </div>
+    <div class="count-label"><span id="wr-n">0</span> / 5 ratones</div>
+
+    <button class="btn btn-primary" id="wr-add" onclick="addMouse('wr')">
+      <span>🐭</span> Añadir ratón
+    </button>
+    <button class="btn btn-ghost" id="wr-skip" onclick="skipWrithing()" disabled title="Disponible a partir del tercer ratón">
+      <span>⏩</span> Saltar al resultado
+    </button>
+    <button class="btn btn-secondary" id="wr-save" onclick="saveSession('wr')" disabled>
+      <span>💾</span> Guardar sesión
+    </button>
+    <button class="btn btn-ghost" onclick="newSession('wr')">
+      ↺ Nueva sesión
+    </button>
+  </div>
+
+  <!-- Scene -->
+  <div>
+    <div class="scene-box">
+      <div class="scene-area">
+        <svg class="scene-svg" viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- Mesa -->
+          <rect x="0" y="182" width="460" height="38" fill="#1a1410"/>
+          <rect x="0" y="182" width="460" height="4" fill="#2a2016"/>
+          <!-- Caja de observación (metacrilato) -->
+          <rect x="60" y="62" width="270" height="122" rx="4" fill="#9ec9e8" opacity="0.07"/>
+          <rect x="60" y="62" width="270" height="122" rx="4" fill="none" stroke="#7fb2d6" stroke-width="2" opacity="0.55"/>
+          <line x1="60" y1="170" x2="330" y2="170" stroke="#7fb2d6" stroke-width="1" opacity="0.35"/>
+          <rect x="64" y="66" width="8" height="114" fill="white" opacity="0.06"/>
+          <!-- Ratón (vista lateral) -->
+          <g id="wr-mouse">
+            <ellipse cx="200" cy="172" rx="48" ry="4" fill="#000" opacity="0.35"/>
+            <!-- cola -->
+            <path d="M148 150 Q120 158 104 150 Q92 144 90 132" stroke="#a07048" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <!-- pata trasera (se estira en la contorsión) -->
+            <g id="wr-hind"><ellipse cx="156" cy="164" rx="12" ry="6" fill="#a07048"/></g>
+            <!-- cuerpo (se contrae en la contorsión) -->
+            <g id="wr-body">
+              <ellipse cx="195" cy="146" rx="46" ry="21" fill="#b8956a"/>
+              <ellipse cx="195" cy="156" rx="28" ry="8" fill="#d0aa80" opacity="0.3"/>
+            </g>
+            <!-- patas delanteras -->
+            <ellipse cx="222" cy="166" rx="10" ry="5" fill="#a07048"/>
+            <ellipse cx="200" cy="167" rx="10" ry="5" fill="#a07048"/>
+            <!-- cabeza -->
+            <ellipse cx="236" cy="142" rx="15" ry="15" fill="#b8956a"/>
+            <ellipse cx="248" cy="133" rx="23" ry="19" fill="#c8a578"/>
+            <ellipse cx="240" cy="116" rx="10" ry="8.5" fill="#c8a578"/><ellipse cx="240" cy="116" rx="6" ry="5" fill="#e0b0b0"/>
+            <ellipse cx="258" cy="114" rx="9" ry="8" fill="#c8a578"/><ellipse cx="258" cy="114" rx="5.5" ry="4.5" fill="#e0b0b0"/>
+            <circle cx="257" cy="129" r="4.3" fill="#0a0a0a"/><circle cx="258.6" cy="127.4" r="1.5" fill="white"/>
+            <ellipse cx="269" cy="137" rx="4.5" ry="3" fill="#e0b0b0"/>
+            <line x1="269" y1="135" x2="287" y2="131" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+            <line x1="269" y1="137" x2="289" y2="138" stroke="#ccc" stroke-width="0.8" opacity="0.7"/>
+          </g>
+          <!-- Cronómetro y contador -->
+          <rect x="350" y="70" width="92" height="42" rx="5" fill="#000"/>
+          <text x="396" y="84" text-anchor="middle" fill="#7a8a99" font-size="8" font-family="IBM Plex Mono, monospace">TIEMPO</text>
+          <text id="wr-clock" x="396" y="104" text-anchor="middle" fill="#5dade2" font-size="16" font-weight="700" font-family="IBM Plex Mono, monospace">00:00</text>
+          <rect x="350" y="122" width="92" height="50" rx="5" fill="#000"/>
+          <text x="396" y="136" text-anchor="middle" fill="#7a8a99" font-size="8" font-family="IBM Plex Mono, monospace">CONTORSIONES</text>
+          <text id="wr-count" x="396" y="161" text-anchor="middle" fill="#ff7b2b" font-size="22" font-weight="700" font-family="IBM Plex Mono, monospace">0</text>
+          <text x="195" y="56" text-anchor="middle" fill="#3a4a5a" font-size="9" font-weight="700" font-family="IBM Plex Mono, monospace">CAJA DE OBSERVACIÓN</text>
+        </svg>
+      </div>
+      <div class="statusbar">
+        <div class="sdot" id="wr-sdot"></div>
+        <span id="wr-status">Selecciona fármaco y dosis, después añade un ratón.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="panel">
+    <div class="panel-label">Resultados</div>
+    <div class="last-display">
+      <div class="last-num" id="wr-last">--<span class="last-unit"> contorsiones</span></div>
+      <div style="font-size:0.72em;color:var(--muted);margin-top:3px;font-family:var(--mono)">último valor</div>
+    </div>
+    <table class="rtable">
+      <thead><tr><th>Ratón</th><th>Contorsiones</th></tr></thead>
+      <tbody id="wr-rbody">
+        <tr><td colspan="2" style="color:var(--muted);font-size:0.82em;text-align:center;padding:14px">Sin datos</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /.grid3 -->
+
+<!-- Accumulated data -->
+<div class="data-panel">
+  <div class="data-header">
+    <div class="data-header-left">Tabla de datos acumulados — Test de contorsiones</div>
+    <div class="data-header-right">
+      <div class="chip" id="wr-chip">0 sesiones</div>
+      <button class="btn-sm btn-export" onclick="exportCSV('wr')">⬇ Exportar CSV</button>
+      <button class="btn-sm btn-clear" onclick="clearAll('wr')">🗑 Limpiar</button>
+    </div>
+  </div>
+  <div class="scroll-x">
+    <table class="acc-table">
+      <thead>
+        <tr>
+          <th>Fármaco</th><th>Dosis</th><th>Pretrat.</th>
+          <th>R1</th><th>R2</th><th>R3</th><th>R4</th><th>R5</th>
+          <th>Media</th><th>SD</th>
+        </tr>
+      </thead>
+      <tbody id="wr-acc"><tr class="empty-row"><td colspan="10">No hay sesiones guardadas</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /#tf -->
+</div><!-- /.container -->
+
+<script>
+// ============================================================
+//  PHARMACOLOGICAL PARAMETERS (revisión 2026-10)
+//  Administración intraperitoneal (i.p.) · medida a los 30 min
+//  Hot plate (52 °C):  basal ~10 s, cutoff 30 s
+//  Tail flick (IR):    basal ~3 s,  cutoff 15 s
+//  Writhing: contorsiones en 10 min tras ácido acético 0,6 % i.p.
+//  Variabilidad: basal ±15 % por ratón; respuesta ±10 %
+//
+//  emax = % del efecto máximo posible (%MPE) alcanzable
+//  ed50 = dosis (mg/kg) que produce el 50 % de su emax
+//  hill = pendiente de la curva dosis-respuesta
+//
+//  Opioides (morfina, fentanilo): agonistas mu completos,
+//    eficaces en ambos tests; fentanilo ~100 veces más potente.
+//  Tramadol: opioide débil; menor potencia y menor eficacia.
+//  Paracetamol: acción central; efecto moderado en placa
+//    caliente (supraespinal) y casi nulo en tail flick.
+//  AINE (ibuprofeno, celecoxib, piroxicam): mismo techo
+//    (misma eficacia) y distinta potencia; sin efecto
+//    apreciable en tail flick (reflejo espinal).
+// ============================================================
+
+const PH = {
+  hp: {
+    baseline: 10, cutoff: 30, noise: 15,
+    drugs: {
+      control:    { ed50: null,  emax:  0, hill: 0   },
+      paracetamol:{ ed50: 150,   emax: 45, hill: 1.3 },
+      ibuprofen:  { ed50: 40,    emax: 20, hill: 1.5 },
+      celecoxib:  { ed50: 10,    emax: 20, hill: 1.5 },
+      piroxicam:  { ed50: 2.5,   emax: 20, hill: 1.5 },
+      tramadol:   { ed50: 25,    emax: 80, hill: 1.6 },
+      morphine:   { ed50: 4,     emax: 98, hill: 1.6 },
+      fentanyl:   { ed50: 0.04,  emax: 98, hill: 1.7 },
+      // Compuestos desconocidos (clave del profesorado en la guía docente)
+      cmpA:       { ed50: 1.5,   emax: 98, hill: 1.6 },
+      cmpB:       { ed50: 15,    emax: 20, hill: 1.5 },
+      cmpC:       { ed50: 12,    emax: 65, hill: 1.4 }
+    }
+  },
+  tf: {
+    baseline: 3.0, cutoff: 15, noise: 15,
+    drugs: {
+      control:    { ed50: null,  emax:  0, hill: 0   },
+      paracetamol:{ ed50: 200,   emax: 15, hill: 1.3 },
+      ibuprofen:  { ed50: 40,    emax:  5, hill: 1.5 },
+      celecoxib:  { ed50: 10,    emax:  5, hill: 1.5 },
+      piroxicam:  { ed50: 2.5,   emax:  5, hill: 1.5 },
+      tramadol:   { ed50: 20,    emax: 80, hill: 1.6 },
+      morphine:   { ed50: 2.5,   emax: 98, hill: 1.6 },
+      fentanyl:   { ed50: 0.025, emax: 98, hill: 1.7 },
+      cmpA:       { ed50: 1.0,   emax: 98, hill: 1.6 },
+      cmpB:       { ed50: 15,    emax:  5, hill: 1.5 },
+      cmpC:       { ed50: 15,    emax: 55, hill: 1.4 }
+    }
+  }
+};
+
+// Test de contorsiones (writhing): ácido acético 0,6 % i.p.
+// basal = n.º medio de contorsiones del control en 10 min (±20 %)
+// emax  = % de inhibición máxima respecto al control
+// Todos los analgésicos son eficaces (dolor visceral inflamatorio,
+// mediado en parte por prostaglandinas); los AINE no llegan al 100 %
+// porque el ácido acético libera también mediadores no dependientes de COX.
+PH.wr = {
+  baseline: 30, noise: 20,
+  drugs: {
+    control:    { ed50: null,  emax:   0, hill: 0   },
+    paracetamol:{ ed50: 80,    emax:  80, hill: 1.3 },
+    ibuprofen:  { ed50: 15,    emax:  85, hill: 1.3 },
+    celecoxib:  { ed50: 4,     emax:  85, hill: 1.3 },
+    piroxicam:  { ed50: 1,     emax:  85, hill: 1.3 },
+    tramadol:   { ed50: 4,     emax:  95, hill: 1.5 },
+    morphine:   { ed50: 0.5,   emax: 100, hill: 1.6 },
+    fentanyl:   { ed50: 0.005, emax: 100, hill: 1.7 },
+    cmpA:       { ed50: 0.2,   emax: 100, hill: 1.6 },
+    cmpB:       { ed50: 8,     emax:  85, hill: 1.3 },
+    cmpC:       { ed50: 6,     emax:  90, hill: 1.3 }
+  }
+};
+
+// Antagonismo por naloxona (antagonista competitivo de receptores mu):
+// desplaza a la derecha la curva del agonista según Schild: ed50' = ed50 · (1 + [Nx]/KB)
+// OPIOID = fracción del efecto mediada por receptores opioides
+//   (morfina, fentanilo y compuesto A: 1; tramadol: 0,6, por su componente monoaminérgico)
+const NAL_KB = 0.1; // mg/kg
+const OPIOID = { morphine: 1, fentanyl: 1, tramadol: 0.6, cmpA: 1 };
+const NAL_DOSES = [{ v: '0', l: 'Ninguno' }, { v: '0.1', l: 'Naloxona 0,1 mg/kg' }, { v: '1', l: 'Naloxona 1 mg/kg' }, { v: '10', l: 'Naloxona 10 mg/kg' }];
+function effectPct(d, drug, dose, shift) {
+  const hf = ed => Math.pow(dose, d.hill) / (Math.pow(ed, d.hill) + Math.pow(dose, d.hill));
+  const f = OPIOID[drug] || 0;
+  return d.emax * (f * hf(d.ed50 * shift) + (1 - f) * hf(d.ed50));
+}
+
+// Dosis disponibles (valor, etiqueta)
+const mk = arr => arr.map(v => ({ v: String(v), l: String(v).replace('.', ',') + ' mg/kg' }));
+const DOSE_OPTIONS = {
+  control:     [{ v: '10', l: '10 ml/kg' }],
+  paracetamol: mk([25, 50, 100, 200, 300, 400]),
+  ibuprofen:   mk([10, 25, 50, 100, 200, 300]),
+  celecoxib:   mk([2.5, 5, 10, 25, 50, 100]),
+  piroxicam:   mk([0.5, 1, 2.5, 5, 10, 20]),
+  tramadol:    mk([5, 10, 20, 40, 80]),
+  morphine:    mk([0.5, 1, 2.5, 5, 10, 20]),
+  fentanyl:    mk([0.005, 0.01, 0.025, 0.05, 0.1, 0.2]),
+  // Compuestos desconocidos: rango amplio, el alumnado debe explorar la escala de dosis
+  cmpA:        mk([0.01, 0.1, 1, 3, 10, 30, 100, 300]),
+  cmpB:        mk([0.01, 0.1, 1, 3, 10, 30, 100, 300]),
+  cmpC:        mk([0.01, 0.1, 1, 3, 10, 30, 100, 300])
+};
+
+const DRUG_NAMES = {
+  control:'Control (s.f.)', paracetamol:'Paracetamol', ibuprofen:'Ibuprofeno',
+  piroxicam:'Piroxicam', celecoxib:'Celecoxib', tramadol:'Tramadol',
+  morphine:'Morfina', fentanyl:'Fentanilo',
+  cmpA:'Compuesto A', cmpB:'Compuesto B', cmpC:'Compuesto C'
+};
+
+// ============================================================
+//  STATE
+// ============================================================
+const S = {
+  hp: { vals: [], busy: false },
+  tf: { vals: [], busy: false },
+  wr: { vals: [], busy: false }
+};
+const DB = { hp: [], tf: [], wr: [] };
+
+// ============================================================
+//  INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  onDrugChange('hp');
+  onDrugChange('tf');
+  onDrugChange('wr');
+  ['hp','tf','wr'].forEach(t => {
+    document.getElementById(`${t}-antag`).innerHTML = NAL_DOSES.map(d => `<option value="${d.v}">${d.l}</option>`).join('');
+  });
+  document.getElementById('wr-mouse').parentNode.classList.add('wr-idle');
+});
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ============================================================
+//  DRUG / DOSE SELECTORS
+// ============================================================
+function onDrugChange(t) {
+  const drug = document.getElementById(`${t}-drug`).value;
+  const sel  = document.getElementById(`${t}-dose`);
+  sel.innerHTML = DOSE_OPTIONS[drug].map(d => `<option value="${d.v}">${d.l}</option>`).join('');
+}
+
+// ============================================================
+//  PHARMACOLOGY
+// ============================================================
+function rnd(v, pct) {
+  return v * (1 + (Math.random() - 0.5) * 2 * (pct / 100));
+}
+
+function calcLat(t, drug, dose, shift = 1) {
+  const p    = PH[t];
+  const d    = p.drugs[drug];
+  const base = rnd(p.baseline, p.noise);
+  if (!d || d.ed50 === null) return +base.toFixed(2);
+  const eff  = effectPct(d, drug, dose, shift);
+  const raw  = base + (eff / 100) * (p.cutoff - base);
+  return +Math.min(rnd(raw, 10), p.cutoff).toFixed(2);
+}
+
+function calcWrithes(drug, dose, shift = 1) {
+  const p = PH.wr, d = p.drugs[drug];
+  const base = rnd(p.baseline, p.noise);
+  const eff = (!d || d.ed50 === null) ? 0 : effectPct(d, drug, dose, shift);
+  return Math.max(0, Math.round(rnd(base * (1 - eff / 100), 15)));
+}
+const fmt  = (t, v) => t === 'wr' ? v.toFixed(0) : v.toFixed(2);
+const fmtM = (t, v) => t === 'wr' ? v.toFixed(1) : v.toFixed(2);
+const UNIT = t => t === 'wr' ? ' contorsiones' : 's';
+
+function stats(arr) {
+  if (!arr.length) return [0, 0];
+  const m  = arr.reduce((a, b) => a + b) / arr.length;
+  const sd = arr.length > 1
+    ? Math.sqrt(arr.map(x => (x - m) ** 2).reduce((a, b) => a + b) / (arr.length - 1))
+    : 0;
+  return [m, sd];
+}
+
+// ============================================================
+//  ADD MOUSE
+// ============================================================
+function addMouse(t) {
+  const s = S[t];
+  if (s.busy || s.vals.length >= 5) return;
+  s.busy = true;
+  document.getElementById(`${t}-drug`).disabled = true;
+  document.getElementById(`${t}-dose`).disabled = true;
+  document.getElementById(`${t}-antag`).disabled = true;
+
+  const drug  = document.getElementById(`${t}-drug`).value;
+  const dose  = parseFloat(document.getElementById(`${t}-dose`).value);
+  const nal   = parseFloat(document.getElementById(`${t}-antag`).value) || 0;
+  const shift = 1 + nal / NAL_KB;
+  if (t === 'wr') { runWrithing(drug, dose, shift); return; }
+  const lat   = calcLat(t, drug, dose, shift);
+  const n     = s.vals.length; // 0-based index before push
+
+  document.getElementById(`${t}-add`).disabled = true;
+  setStatus(t, `🔬 Ratón ${n+1}: aplicando estímulo térmico…`, 'active');
+
+  // Reset animation
+  if (t === 'hp') resetAnim('hp');
+  else resetAnim('tf');
+
+  // Animate after delay proportional to latency
+  const animDelay = Math.min(Math.max(lat * 170, 700), 2200);
+  const jumpDelay = Math.max(animDelay - 550, 150);
+
+  setTimeout(() => {
+    if (t === 'hp') document.getElementById('hp-mouse-grp').classList.add('hp-jump');
+    else            document.getElementById('tf-tail-grp').classList.add('tf-retract');
+  }, jumpDelay);
+
+  setTimeout(() => {
+    s.vals.push(lat);
+    const pos = s.vals.length - 1;
+
+    // Dot
+    document.getElementById(`${t}-d${pos}`).classList.add('filled');
+    document.getElementById(`${t}-n`).textContent = s.vals.length;
+
+    // Last value display
+    const lastEl = document.getElementById(`${t}-last`);
+    const isCutoff = lat >= PH[t].cutoff;
+    lastEl.innerHTML = lat.toFixed(2) + '<span class="last-unit">s</span>';
+    lastEl.className = 'last-num flash' + (isCutoff ? ' cutoff' : '');
+    setTimeout(() => lastEl.classList.remove('flash'), 700);
+
+    // Results table
+    updateRTable(t);
+
+    // Status
+    setStatus(t,
+      `✓ Ratón ${s.vals.length}: ${lat.toFixed(2)} s${isCutoff ? ' ← cutoff' : ''}`,
+      'done'
+    );
+
+    s.busy = false;
+    document.getElementById(`${t}-add`).disabled = s.vals.length >= 5;
+    if (s.vals.length >= 5) {
+      document.getElementById(`${t}-save`).disabled = false;
+      document.getElementById(`${t}-save`).classList.add('btn-save-glow');
+      document.getElementById(`${t}-add`).disabled = true;
+      setStatus(t, '✓ 5 ratones completados — guarda la sesión para acumular en la tabla.', 'done');
+    }
+  }, animDelay);
+}
+
+function updateRTable(t) {
+  const s    = S[t];
+  const tbody = document.getElementById(`${t}-rbody`);
+  const [m, sd] = stats(s.vals);
+
+  let html = s.vals.map((v, i) =>
+    `<tr><td>Ratón ${i+1}</td><td class="mono">${fmt(t, v)}</td></tr>`
+  ).join('');
+
+  if (s.vals.length > 1) {
+    html += `<tr class="stats"><td>Media ± SD</td><td>${fmtM(t, m)} ± ${fmtM(t, sd)}</td></tr>`;
+  }
+
+  tbody.innerHTML = html || `<tr><td colspan="2" style="text-align:center;color:var(--muted);padding:14px">Sin datos</td></tr>`;
+}
+
+// ============================================================
+//  SAVE SESSION
+// ============================================================
+function saveSession(t) {
+  const s = S[t];
+  if (s.vals.length < 5) return;
+
+  const drug  = document.getElementById(`${t}-drug`).value;
+  const dose  = document.getElementById(`${t}-dose`).value;
+  const doseOpt = DOSE_OPTIONS[drug].find(d => d.v === dose);
+  const antSel = document.getElementById(`${t}-antag`);
+  const antLabel = antSel.value === '0' ? '—' : antSel.options[antSel.selectedIndex].text;
+  const [m, sd] = stats(s.vals);
+
+  DB[t].push({
+    drug: DRUG_NAMES[drug],
+    doseLabel: doseOpt ? doseOpt.l : dose + ' mg/kg',
+    doseVal: parseFloat(dose),
+    antag: antLabel,
+    vals: [...s.vals],
+    mean: m, sd
+  });
+
+  renderAccTable(t);
+  newSession(t);
+}
+
+function newSession(t) {
+  S[t].vals = [];
+  S[t].busy = false;
+  for (let i = 0; i < 5; i++) document.getElementById(`${t}-d${i}`).classList.remove('filled');
+  document.getElementById(`${t}-n`).textContent = '0';
+  document.getElementById(`${t}-last`).innerHTML = `--<span class="last-unit">${UNIT(t)}</span>`;
+  document.getElementById(`${t}-last`).className = 'last-num';
+  document.getElementById(`${t}-rbody`).innerHTML =
+    `<tr><td colspan="2" style="color:var(--muted);font-size:0.82em;text-align:center;padding:14px">Sin datos</td></tr>`;
+  document.getElementById(`${t}-add`).disabled = false;
+  document.getElementById(`${t}-drug`).disabled = false;
+  document.getElementById(`${t}-dose`).disabled = false;
+  document.getElementById(`${t}-antag`).disabled = false;
+  document.getElementById(`${t}-save`).disabled = true;
+  document.getElementById(`${t}-save`).classList.remove('btn-save-glow');
+  resetAnim(t);
+  setStatus(t, 'Nueva sesión lista. Selecciona fármaco y dosis.', '');
+}
+
+// ============================================================
+//  ACCUMULATED TABLE
+// ============================================================
+function renderAccTable(t) {
+  const data  = DB[t];
+  const chip  = document.getElementById(`${t}-chip`);
+  const tbody = document.getElementById(`${t}-acc`);
+
+  chip.textContent = `${data.length} sesión${data.length !== 1 ? 'es' : ''}`;
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="10">No hay sesiones guardadas</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(r => {
+    const cells = [0,1,2,3,4].map(i =>
+      `<td class="mono">${r.vals[i] !== undefined ? fmt(t, r.vals[i]) : '—'}</td>`
+    ).join('');
+    return `<tr>
+      <td class="drug">${r.drug}</td>
+      <td class="mono">${r.doseLabel}</td>
+      <td>${r.antag || '—'}</td>
+      ${cells}
+      <td class="mono">${fmtM(t, r.mean)}</td>
+      <td class="mono">${fmtM(t, r.sd)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+//  EXPORT CSV
+// ============================================================
+function exportCSV(t) {
+  if (!DB[t].length) { alert('No hay datos guardados.'); return; }
+
+  // Formato para Excel en español: separador «;» y coma decimal
+  const num = v => (t === 'wr' ? v.toFixed(1) : v.toFixed(2)).replace('.', ',');
+  const testName = { hp: 'Placa_caliente', tf: 'Retirada_cola', wr: 'Contorsiones' }[t];
+  const u = t === 'wr' ? '' : ' (s)';
+  const hdr = `Test;Fármaco;Dosis;Pretratamiento;R1${u};R2${u};R3${u};R4${u};R5${u};Media${u};SD${u}\n`;
+  const rows = DB[t].map(r => {
+    const cells = [0,1,2,3,4].map(i => r.vals[i] !== undefined ? (t === 'wr' ? String(r.vals[i]) : num(r.vals[i])) : '').join(';');
+    return `${testName};${r.drug};${r.doseLabel};${r.antag || '—'};${cells};${num(r.mean)};${num(r.sd)}`;
+  }).join('\n');
+
+  const blob = new Blob(['\uFEFF' + hdr + rows], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `Analgesicos_${testName}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearAll(t) {
+  if (!DB[t].length) return;
+  if (!confirm('¿Eliminar todas las sesiones guardadas de este test?')) return;
+  DB[t] = [];
+  renderAccTable(t);
+}
+
+// ============================================================
+//  STATUS BAR
+// ============================================================
+function setStatus(t, msg, state) {
+  document.getElementById(`${t}-status`).textContent = msg;
+  const d = document.getElementById(`${t}-sdot`);
+  d.className = 'sdot' + (state ? ' ' + state : '');
+}
+
+// ============================================================
+//  WRITHING: registro de 10 min en tiempo acelerado (~6 s)
+// ============================================================
+let wrTotal = 0, wrSkip = false;     // los dos primeros ratones se ven completos; después se puede saltar
+function skipWrithing() { wrSkip = true; }
+function runWrithing(drug, dose, shift = 1) {
+  const t = 'wr', s = S[t];
+  const n = calcWrithes(drug, dose, shift);
+  wrSkip = false;
+  document.getElementById('wr-skip').disabled = wrTotal < 2;
+  wrTotal++;
+  const DUR = 6000, LAT = 0.5;            // 0,5 min de los 10 en blanco (inicio)
+  const times = Array.from({ length: n }, () => (LAT + Math.random() * (10 - LAT)) / 10 * DUR).sort((a, b) => a - b);
+  const svg = document.getElementById('wr-mouse').parentNode;
+  const clock = document.getElementById('wr-clock'), counter = document.getElementById('wr-count');
+  resetAnim(t);
+  setStatus(t, `🔬 Ratón ${s.vals.length + 1}: ácido acético inyectado · registrando contorsiones…`, 'active');
+  let shown = 0, lastAnim = -1000;
+  const t0 = performance.now();
+  function frame(now) {
+    if (wrSkip) {
+      clock.textContent = '10:00'; counter.textContent = n;
+      svg.classList.remove('wr-writhe');
+      finishWrithing(n);
+      return;
+    }
+    const el = now - t0;
+    const mins = Math.min(el / DUR * 10, 10);
+    const mm = Math.floor(mins), ss = Math.floor((mins - mm) * 60);
+    clock.textContent = `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    while (shown < n && times[shown] <= el) {
+      shown++;
+      counter.textContent = shown;
+      if (el - lastAnim > 380) {            // animación visible (limitada para que no se solape)
+        lastAnim = el;
+        svg.classList.remove('wr-writhe'); void svg.offsetWidth; svg.classList.add('wr-writhe');
+      }
+    }
+    if (el < DUR) { requestAnimationFrame(frame); return; }
+    clock.textContent = '10:00'; counter.textContent = n;
+    svg.classList.remove('wr-writhe');
+    finishWrithing(n);
+  }
+  requestAnimationFrame(frame);
+}
+
+function finishWrithing(n) {
+  const t = 'wr', s = S[t];
+  document.getElementById('wr-skip').disabled = true;
+  s.vals.push(n);
+  const pos = s.vals.length - 1;
+  document.getElementById(`${t}-d${pos}`).classList.add('filled');
+  document.getElementById(`${t}-n`).textContent = s.vals.length;
+  const lastEl = document.getElementById(`${t}-last`);
+  lastEl.innerHTML = n + '<span class="last-unit"> contorsiones</span>';
+  lastEl.className = 'last-num flash';
+  setTimeout(() => lastEl.classList.remove('flash'), 700);
+  updateRTable(t);
+  setStatus(t, `✓ Ratón ${s.vals.length}: ${n} contorsiones en 10 min`, 'done');
+  s.busy = false;
+  document.getElementById(`${t}-add`).disabled = s.vals.length >= 5;
+  if (s.vals.length >= 5) {
+    document.getElementById(`${t}-save`).disabled = false;
+    document.getElementById(`${t}-save`).classList.add('btn-save-glow');
+    setStatus(t, '✓ 5 ratones completados — guarda la sesión para acumular en la tabla.', 'done');
+  }
+}
+
+// ============================================================
+//  ANIMATION RESET
+// ============================================================
+function resetAnim(t) {
+  if (t === 'hp') {
+    const el = document.getElementById('hp-mouse-grp');
+    el.classList.remove('hp-jump');
+    void el.offsetWidth; // reflow
+  } else if (t === 'wr') {
+    document.getElementById('wr-clock').textContent = '00:00';
+    document.getElementById('wr-count').textContent = '0';
+  } else {
+    const el = document.getElementById('tf-tail-grp');
+    el.classList.remove('tf-retract');
+    void el.offsetWidth;
+  }
+}
+</script>
+</body>
+</html>
